@@ -1,7 +1,7 @@
 import streamlit as st
 import pandas as pd
 import sqlite3
-from datetime import datetime
+from datetime import datetime, date, timedelta
 
 # Page Configuration
 st.set_page_config(page_title="Umrah Package Calculator", layout="wide")
@@ -57,7 +57,6 @@ if check_password():
     ''')
     conn.commit()
 
-    # Dynamic Column Addition for existing DBs
     try:
         c.execute("ALTER TABLE quotations ADD COLUMN jeddah_hotel TEXT")
         conn.commit()
@@ -173,26 +172,59 @@ if check_password():
     exchange_rate = st.sidebar.number_input("SAR to BDT Exchange Rate", min_value=1.0, value=32.0, step=0.5)
     profit_margin = st.sidebar.slider("Agency Profit Margin (%)", min_value=0, value=10, max_value=50) / 100.0
 
+    today = date.today()
+
+    # --- MAKKAH HOTEL SECTION ---
     st.sidebar.markdown("## 2. Makkah Hotel (Vendor Quote)")
     makkah_name = st.sidebar.text_input("Makkah Hotel Name", value="")
     makkah_rate = st.sidebar.number_input("Makkah DBL Rate / Night (SAR)", min_value=0.0, value=660.0, step=10.0)
-    makkah_nights = st.sidebar.number_input("Makkah Total Nights", min_value=1, value=4)
+    
+    makkah_dates = st.sidebar.date_input(
+        "Makkah Stay Dates (Check-in to Check-out)",
+        value=(today, today + timedelta(days=4))
+    )
+    
+    if isinstance(makkah_dates, (tuple, list)) and len(makkah_dates) == 2:
+        makkah_checkin, makkah_checkout = makkah_dates
+        makkah_nights = (makkah_checkout - makkah_checkin).days
+    else:
+        makkah_checkin, makkah_checkout = today, today + timedelta(days=4)
+        makkah_nights = 4
+    
+    makkah_nights = max(1, makkah_nights)
+    st.sidebar.caption(f"Calculated Stay: **{makkah_nights} Night(s)** ({makkah_checkin.strftime('%d %b')} - {makkah_checkout.strftime('%d %b %Y')})")
 
     add_makkah_ex = st.sidebar.checkbox("Add Makkah Extra Bed (EX)?", value=True)
     makkah_ex_rate = 0.0
     if add_makkah_ex:
         makkah_ex_rate = st.sidebar.number_input("Makkah EX Rate / Night (SAR)", min_value=0.0, value=90.0, step=10.0)
 
+    # --- MADINAH HOTEL SECTION ---
     st.sidebar.markdown("## 3. Madinah Hotel (Vendor Quote)")
     madinah_name = st.sidebar.text_input("Madinah Hotel Name", value="")
     madinah_rate = st.sidebar.number_input("Madinah DBL Rate / Night (SAR)", min_value=0.0, value=500.0, step=10.0)
-    madinah_nights = st.sidebar.number_input("Madinah Total Nights", min_value=1, value=3)
+    
+    madinah_dates = st.sidebar.date_input(
+        "Madinah Stay Dates (Check-in to Check-out)",
+        value=(makkah_checkout, makkah_checkout + timedelta(days=3))
+    )
+    
+    if isinstance(madinah_dates, (tuple, list)) and len(madinah_dates) == 2:
+        madinah_checkin, madinah_checkout = madinah_dates
+        madinah_nights = (madinah_checkout - madinah_checkin).days
+    else:
+        madinah_checkin, madinah_checkout = makkah_checkout, makkah_checkout + timedelta(days=3)
+        madinah_nights = 3
+        
+    madinah_nights = max(1, madinah_nights)
+    st.sidebar.caption(f"Calculated Stay: **{madinah_nights} Night(s)** ({madinah_checkin.strftime('%d %b')} - {madinah_checkout.strftime('%d %b %Y')})")
 
     add_madinah_ex = st.sidebar.checkbox("Add Madinah Extra Bed (EX)?", value=False)
     madinah_ex_rate = 0.0
     if add_madinah_ex:
         madinah_ex_rate = st.sidebar.number_input("Madinah EX Rate / Night (SAR)", min_value=0.0, value=90.0, step=10.0)
 
+    # --- SIGHTSEEING SECTION ---
     st.sidebar.markdown("## 4. Sightseeing & Tours Inclusion")
     include_makkah_mazarat = st.sidebar.checkbox("Include Makkah Mazarat", value=True)
     include_madinah_mazarat = st.sidebar.checkbox("Include Madinah Mazarat", value=True)
@@ -206,6 +238,7 @@ if check_password():
     jeddah_nights = 0
     add_jeddah_ex = False
     jeddah_ex_rate = 0.0
+    jeddah_checkin, jeddah_checkout = madinah_checkout, madinah_checkout + timedelta(days=1)
 
     if include_jeddah_tour == "Yes":
         st.sidebar.markdown("## 5. Jeddah Hotel (Optional Stay)")
@@ -213,11 +246,27 @@ if check_password():
         if include_jeddah_hotel:
             jeddah_name = st.sidebar.text_input("Jeddah Hotel Name", value="")
             jeddah_rate = st.sidebar.number_input("Jeddah DBL Rate / Night (SAR)", min_value=0.0, value=450.0, step=10.0)
-            jeddah_nights = st.sidebar.number_input("Jeddah Total Nights", min_value=1, value=1)
+            
+            jeddah_dates = st.sidebar.date_input(
+                "Jeddah Stay Dates (Check-in to Check-out)",
+                value=(madinah_checkout, madinah_checkout + timedelta(days=1))
+            )
+            
+            if isinstance(jeddah_dates, (tuple, list)) and len(jeddah_dates) == 2:
+                jeddah_checkin, jeddah_checkout = jeddah_dates
+                jeddah_nights = (jeddah_checkout - jeddah_checkin).days
+            else:
+                jeddah_checkin, jeddah_checkout = madinah_checkout, madinah_checkout + timedelta(days=1)
+                jeddah_nights = 1
+                
+            jeddah_nights = max(1, jeddah_nights)
+            st.sidebar.caption(f"Calculated Stay: **{jeddah_nights} Night(s)** ({jeddah_checkin.strftime('%d %b')} - {jeddah_checkout.strftime('%d %b %Y')})")
+
             add_jeddah_ex = st.sidebar.checkbox("Add Jeddah Extra Bed (EX)?", value=False)
             if add_jeddah_ex:
                 jeddah_ex_rate = st.sidebar.number_input("Jeddah EX Rate / Night (SAR)", min_value=0.0, value=90.0, step=10.0)
 
+    # --- MANDATORY SERVICES ---
     st.sidebar.markdown("## 6. Mandatory Services & Inclusions")
     include_visa = st.sidebar.checkbox("Include Visa Processing Fee?", value=True)
     visa_fee_per_pax = 0.0
@@ -422,9 +471,13 @@ if check_password():
     madinah_room_type = "Double Room Sharing with Extra Bed" if add_madinah_ex else "Double Room Sharing"
     jeddah_room_type = "Double Room Sharing with Extra Bed" if add_jeddah_ex else "Double Room Sharing"
 
-    hotel_text_lines = f"• Makkah ({makkah_nights} Nights): {makkah_hotel_display} ({makkah_room_type})\n• Madinah ({madinah_nights} Nights): {madinah_hotel_display} ({madinah_room_type})"
+    makkah_dates_str = f"{makkah_checkin.strftime('%d %b %Y')} to {makkah_checkout.strftime('%d %b %Y')}"
+    madinah_dates_str = f"{madinah_checkin.strftime('%d %b %Y')} to {madinah_checkout.strftime('%d %b %Y')}"
+    jeddah_dates_str = f"{jeddah_checkin.strftime('%d %b %Y')} to {jeddah_checkout.strftime('%d %b %Y')}"
+
+    hotel_text_lines = f"• Makkah ({makkah_nights} Nights | {makkah_dates_str}): {makkah_hotel_display} ({makkah_room_type})\n• Madinah ({madinah_nights} Nights | {madinah_dates_str}): {madinah_hotel_display} ({madinah_room_type})"
     if include_jeddah_hotel:
-        hotel_text_lines += f"\n• Jeddah ({jeddah_nights} Nights): {jeddah_hotel_display} ({jeddah_room_type})"
+        hotel_text_lines += f"\n• Jeddah ({jeddah_nights} Nights | {jeddah_dates_str}): {jeddah_hotel_display} ({jeddah_room_type})"
 
     quotation_text = f"""UMRAH LAND PACKAGE QUOTATION
 -----------------------------------------
@@ -451,7 +504,7 @@ Package Investment:
 (Note: Air ticket is excluded. Rates are subject to availability upon confirmation.)
 """
 
-    st.text_area("Copy Quotation Text Below:", value=quotation_text, height=290)
+    st.text_area("Copy Quotation Text Below:", value=quotation_text, height=310)
 
     st.divider()
 
