@@ -12,26 +12,27 @@ APP_PASSWORD = "share123"
 def check_password():
     """Returns True if the user entered the correct password."""
     def password_entered():
-        if st.session_state["password"] == APP_PASSWORD:
+        if st.session_state.get("password") == APP_PASSWORD:
             st.session_state["password_correct"] = True
-            del st.session_state["password"]
+            if "password" in st.session_state:
+                del st.session_state["password"]
         else:
             st.session_state["password_correct"] = False
 
     if "password_correct" not in st.session_state:
-        st.markdown("<h2 style='color: #64FFDA; text-align: center; margin-top: 50px;'>Umrah Package Calculator - Login</h2>", unsafe_allow_html=True)
-        st.markdown("<p style='text-align: center; color: #8892B0;'>Please enter your team password to access the calculator.</p>", unsafe_allow_html=True)
+        st.markdown("<h2 style='color: #38BDF8; text-align: center; margin-top: 50px;'>Umrah Package Calculator - Login</h2>", unsafe_allow_html=True)
+        st.markdown("<p style='text-align: center; color: #94A3B8;'>Please enter your team password to access the calculator.</p>", unsafe_allow_html=True)
         
         col1, col2, col3 = st.columns([1, 2, 1])
         with col2:
             st.text_input("Password", type="password", on_change=password_entered, key="password")
         return False
     elif not st.session_state["password_correct"]:
-        st.markdown("<h2 style='color: #64FFDA; text-align: center; margin-top: 50px;'>Umrah Package Calculator - Login</h2>", unsafe_allow_html=True)
+        st.markdown("<h2 style='color: #38BDF8; text-align: center; margin-top: 50px;'>Umrah Package Calculator - Login</h2>", unsafe_allow_html=True)
         col1, col2, col3 = st.columns([1, 2, 1])
         with col2:
             st.text_input("Password", type="password", on_change=password_entered, key="password")
-            st.error("😕 Password incorrect. Please try again.")
+            st.error(" Password incorrect. Please try again.")
         return False
     else:
         return True
@@ -63,128 +64,57 @@ if check_password():
     except sqlite3.OperationalError:
         pass
 
-    # --- CUSTOM CSS FOR LUXURY DARK NAVY THEME ---
+    # --- CUSTOM STYLING (CLEAN & ERROR-FREE DARK THEME ACCENTS) ---
     st.markdown("""
         <style>
-        /* Main App Background - Midnight Navy Gradient */
-        .stApp {
-            background: linear-gradient(135deg, #0A0E17 0%, #101726 50%, #0B132B 100%) !important;
-            color: #E6F1FF !important;
-        }
-        
-        /* Headers */
         .main-header {
-            font-size: 34px; 
+            font-size: 32px; 
             font-weight: 800; 
-            color: #64FFDA; /* Teal Cyan Accent */
-            letter-spacing: 0.5px;
+            color: #38BDF8;
             margin-bottom: 0px;
         }
         .sub-header {
             font-size: 15px; 
             font-weight: 600; 
-            color: #8892B0;
-            margin-bottom: 25px;
+            color: #94A3B8;
+            margin-bottom: 20px;
         }
-        
-        /* Sidebar Styling - Dark Slate Blue */
-        section[data-testid="stSidebar"] {
-            background-color: #0B132B !important;
-            border-right: 1px solid #1E293B;
-        }
-        
-        section[data-testid="stSidebar"] h2 {
-            color: #64FFDA !important;
-            font-weight: 700 !important;
-            font-size: 16px !important;
-            border-bottom: 1px solid #1E3A8A;
-            padding-bottom: 6px;
-            margin-top: 18px;
-            letter-spacing: 0.5px;
-        }
-        
-        section[data-testid="stSidebar"] label {
-            color: #CCD6F6 !important;
-            font-weight: 600 !important;
-            font-size: 13px !important;
-        }
-        
-        /* Inputs & Selectboxes */
-        section[data-testid="stSidebar"] input, 
-        section[data-testid="stSidebar"] div[role="combobox"] {
-            background-color: #1C2541 !important;
-            color: #FFFFFF !important;
-            border: 1px solid #3A506B !important;
-            border-radius: 8px !important;
-        }
-
-        /* Summary Cards - Glassmorphism & Subtle Glow */
-        .summary-card {
-            background: linear-gradient(135deg, #1E3A8A 0%, #3B82F6 100%);
-            padding: 22px;
-            border-radius: 14px;
+        .summary-card-primary {
+            background: linear-gradient(135deg, #1E3A8A 0%, #2563EB 100%);
+            padding: 20px;
+            border-radius: 12px;
             color: white;
             text-align: center;
-            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+            box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3);
             border: 1px solid #60A5FA;
         }
-        .summary-card-light {
-            background-color: #111827;
+        .summary-card-secondary {
+            background-color: #0F172A;
             border: 1px solid #1E3A8A;
-            padding: 20px;
-            border-radius: 14px;
+            padding: 18px;
+            border-radius: 12px;
             text-align: center;
-            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
         }
-        .card-label {
+        .card-label-light {
             font-size: 13px;
             font-weight: 700;
             color: #93C5FD;
             text-transform: uppercase;
-            letter-spacing: 1px;
+            letter-spacing: 0.5px;
         }
-        .card-label-dark {
+        .card-label-blue {
             font-size: 13px;
             font-weight: 700;
-            color: #60A5FA;
+            color: #38BDF8;
             text-transform: uppercase;
-            letter-spacing: 1px;
+            letter-spacing: 0.5px;
         }
-        .card-value {
-            font-size: 28px;
+        .card-value-white {
+            font-size: 26px;
             font-weight: 800;
             color: #FFFFFF;
-            margin-top: 6px;
-        }
-        .card-value-dark {
-            font-size: 28px;
-            font-weight: 800;
-            color: #F3F4F6;
-            margin-top: 6px;
-        }
-        
-        /* Table Dark Theme Overrides */
-        div[data-testid="stDataFrame"] {
-            background-color: #111827 !important;
-            border: 1px solid #1E3A8A;
-            border-radius: 10px;
-            overflow: hidden;
-        }
-
-        /* Text Area */
-        textarea {
-            background-color: #0F172A !important;
-            color: #E2E8F0 !important;
-            border: 1px solid #334155 !important;
-            border-radius: 8px !important;
-            font-family: monospace;
-        }
-        
-        /* Dividers */
-        hr {
-            border-top: 1px solid #1E293B;
-            margin-top: 25px;
-            margin-bottom: 25px;
+            margin-top: 5px;
         }
         </style>
     """, unsafe_allow_html=True)
@@ -418,7 +348,7 @@ if check_password():
     col1, col2 = st.columns(2)
 
     with col1:
-        st.markdown("<h3 style='color: #60A5FA;'>Hotel Accommodation</h3>", unsafe_allow_html=True)
+        st.markdown("<h3 style='color: #38BDF8;'>Hotel Accommodation</h3>", unsafe_allow_html=True)
         
         makkah_hotel_display = makkah_name if makkah_name.strip() else "To be specified"
         madinah_hotel_display = madinah_name if madinah_name.strip() else "To be specified"
@@ -441,7 +371,7 @@ if check_password():
         st.info(f"**Total Hotel Expense:** ৳ {hotel_total_bdt:,.2f} ({hotel_total_sar:,.2f} SAR)")
 
     with col2:
-        st.markdown(f"<h3 style='color: #60A5FA;'>Transport & Services (<span style='color: #64FFDA;'>{vehicle_name}</span>)</h3>", unsafe_allow_html=True)
+        st.markdown(f"<h3 style='color: #38BDF8;'>Transport & Services (<span style='color: #60A5FA;'>{vehicle_name}</span>)</h3>", unsafe_allow_html=True)
         
         service_summary_list = []
         if include_visa:
@@ -461,39 +391,39 @@ if check_password():
     st.divider()
 
     # --- FINAL SUMMARY SECTION WITH BRANDED CARDS ---
-    st.markdown("<h3 style='color: #64FFDA; text-align: center;'>Final Quotation Summary</h3>", unsafe_allow_html=True)
+    st.markdown("<h3 style='color: #38BDF8; text-align: center;'>Final Quotation Summary</h3>", unsafe_allow_html=True)
     st.write("")
 
     sum_col1, sum_col2, sum_col3 = st.columns(3)
 
     with sum_col1:
         st.markdown(f"""
-            <div class="summary-card-light">
-                <div class="card-label-dark">Total Net Cost (Agency)</div>
-                <div class="card-value-dark">৳ {net_cost_bdt:,.2f}</div>
+            <div class="summary-card-secondary">
+                <div class="card-label-blue">Total Net Cost (Agency)</div>
+                <div class="card-value-white">৳ {net_cost_bdt:,.2f}</div>
             </div>
         """, unsafe_allow_html=True)
 
     with sum_col2:
         st.markdown(f"""
-            <div class="summary-card">
-                <div class="card-label">Client Package Price ({int(profit_margin*100)}% Margin)</div>
-                <div class="card-value">৳ {client_total_bdt:,.2f}</div>
+            <div class="summary-card-primary">
+                <div class="card-label-light">Client Package Price ({int(profit_margin*100)}% Margin)</div>
+                <div class="card-value-white">৳ {client_total_bdt:,.2f}</div>
             </div>
         """, unsafe_allow_html=True)
 
     with sum_col3:
         st.markdown(f"""
-            <div class="summary-card-light">
-                <div class="card-label-dark">Per Person Package Price</div>
-                <div class="card-value-dark">৳ {per_person_bdt:,.2f}</div>
+            <div class="summary-card-secondary">
+                <div class="card-label-blue">Per Person Package Price</div>
+                <div class="card-value-white">৳ {per_person_bdt:,.2f}</div>
             </div>
         """, unsafe_allow_html=True)
 
     st.divider()
 
     # --- CLIENT READY TEXT GENERATOR SECTION ---
-    st.markdown("<h3 style='color: #64FFDA;'>Client-Ready Quotation Text (Copy & Paste)</h3>", unsafe_allow_html=True)
+    st.markdown("<h3 style='color: #38BDF8;'>Client-Ready Quotation Text (Copy & Paste)</h3>", unsafe_allow_html=True)
     st.write("You can directly copy the text below and send it to your client via WhatsApp or Email:")
 
     client_display_name = client_name.strip() if client_name.strip() else "Valued Client"
@@ -540,7 +470,7 @@ Package Investment:
     st.divider()
 
     # --- SAVE TO DATABASE & HISTORY SECTION ---
-    st.markdown("<h3 style='color: #64FFDA;'>Save & View Saved Quotations History</h3>", unsafe_allow_html=True)
+    st.markdown("<h3 style='color: #38BDF8;'>Save & View Saved Quotations History</h3>", unsafe_allow_html=True)
 
     col_save, col_dl = st.columns([1, 1])
 
