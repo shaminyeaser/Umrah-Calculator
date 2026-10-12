@@ -3,14 +3,11 @@ import pandas as pd
 import sqlite3
 from datetime import datetime, date, timedelta
 
-# Page Configuration
 st.set_page_config(page_title="Umrah Package Calculator", layout="wide")
 
-# --- PASSWORD PROTECTION CONFIGURATION ---
 APP_PASSWORD = "share123"
 
 def check_password():
-    """Returns True if the user entered the correct password."""
     def password_entered():
         if st.session_state.get("password") == APP_PASSWORD:
             st.session_state["password_correct"] = True
@@ -20,27 +17,23 @@ def check_password():
             st.session_state["password_correct"] = False
 
     if "password_correct" not in st.session_state:
-        st.markdown("<h2 style='color: #38BDF8; text-align: center; margin-top: 50px;'>Umrah Package Calculator - Login</h2>", unsafe_allow_html=True)
-        st.markdown("<p style='text-align: center; color: #94A3B8;'>Please enter your team password to access the calculator.</p>", unsafe_allow_html=True)
-        
+        st.markdown("<h2 style='text-align: center; margin-top: 50px;'>Umrah Package Calculator - Login</h2>", unsafe_allow_html=True)
+        st.markdown("<p style='text-align: center;'>Please enter your team password to access the calculator.</p>", unsafe_allow_html=True)
         col1, col2, col3 = st.columns([1, 2, 1])
         with col2:
             st.text_input("Password", type="password", on_change=password_entered, key="password")
         return False
     elif not st.session_state["password_correct"]:
-        st.markdown("<h2 style='color: #38BDF8; text-align: center; margin-top: 50px;'>Umrah Package Calculator - Login</h2>", unsafe_allow_html=True)
+        st.markdown("<h2 style='text-align: center; margin-top: 50px;'>Umrah Package Calculator - Login</h2>", unsafe_allow_html=True)
         col1, col2, col3 = st.columns([1, 2, 1])
         with col2:
             st.text_input("Password", type="password", on_change=password_entered, key="password")
-            st.error(" Password incorrect. Please try again.")
+            st.error("Password incorrect. Please try again.")
         return False
     else:
         return True
 
-# If password is correct, run the main app
 if check_password():
-
-    # --- DATABASE SETUP (Built-in SQLite) ---
     conn = sqlite3.connect('umrah_quotes.db')
     c = conn.cursor()
     c.execute('''
@@ -64,135 +57,56 @@ if check_password():
     except sqlite3.OperationalError:
         pass
 
-    # --- CUSTOM STYLING (CLEAN & ERROR-FREE DARK THEME ACCENTS) ---
-    st.markdown("""
-        <style>
-        .main-header {
-            font-size: 32px; 
-            font-weight: 800; 
-            color: #38BDF8;
-            margin-bottom: 0px;
-        }
-        .sub-header {
-            font-size: 15px; 
-            font-weight: 600; 
-            color: #94A3B8;
-            margin-bottom: 20px;
-        }
-        .summary-card-primary {
-            background: linear-gradient(135deg, #1E3A8A 0%, #2563EB 100%);
-            padding: 20px;
-            border-radius: 12px;
-            color: white;
-            text-align: center;
-            box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3);
-            border: 1px solid #60A5FA;
-        }
-        .summary-card-secondary {
-            background-color: #0F172A;
-            border: 1px solid #1E3A8A;
-            padding: 18px;
-            border-radius: 12px;
-            text-align: center;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
-        }
-        .card-label-light {
-            font-size: 13px;
-            font-weight: 700;
-            color: #93C5FD;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-        .card-label-blue {
-            font-size: 13px;
-            font-weight: 700;
-            color: #38BDF8;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-        .card-value-white {
-            font-size: 26px;
-            font-weight: 800;
-            color: #FFFFFF;
-            margin-top: 5px;
-        }
-        </style>
-    """, unsafe_allow_html=True)
-
-    # --- HEADER SECTION ---
-    st.markdown('<p class="main-header">Umrah Package Cost Calculator</p>', unsafe_allow_html=True)
-    st.markdown('<p class="sub-header">ShareTrip Operations | Zero-Error Vendor Quote & Land Package Estimator</p>', unsafe_allow_html=True)
+    st.title("Umrah Package Cost Calculator")
+    st.write("ShareTrip Operations | Zero-Error Vendor Quote & Land Package Estimator")
     st.divider()
 
-    # --- SIDEBAR: INPUTS ---
-    st.sidebar.markdown("## 0. Client Details")
+    st.sidebar.markdown("### 0. Client Details")
     client_name = st.sidebar.text_input("Client Name", value="")
 
-    st.sidebar.markdown("## 1. General Inputs")
+    st.sidebar.markdown("### 1. General Inputs")
     pax = st.sidebar.number_input("Total Pilgrims (Pax)", min_value=1, max_value=100, value=2)
     exchange_rate = st.sidebar.number_input("SAR to BDT Exchange Rate", min_value=1.0, value=32.0, step=0.5)
     profit_margin = st.sidebar.slider("Agency Profit Margin (%)", min_value=0, value=10, max_value=50) / 100.0
 
     today = date.today()
 
-    # --- MAKKAH HOTEL SECTION ---
-    st.sidebar.markdown("## 2. Makkah Hotel (Vendor Quote)")
+    st.sidebar.markdown("### 2. Makkah Hotel (Vendor Quote)")
     makkah_name = st.sidebar.text_input("Makkah Hotel Name", value="")
     makkah_rate = st.sidebar.number_input("Makkah DBL Rate / Night (SAR)", min_value=0.0, value=660.0, step=10.0)
     
-    makkah_dates = st.sidebar.date_input(
-        "Makkah Stay Dates (Check-in to Check-out)",
-        value=(today, today + timedelta(days=4))
-    )
-    
+    makkah_dates = st.sidebar.date_input("Makkah Stay Dates", value=(today, today + timedelta(days=4)))
     if isinstance(makkah_dates, (tuple, list)) and len(makkah_dates) == 2:
         makkah_checkin, makkah_checkout = makkah_dates
-        makkah_nights = (makkah_checkout - makkah_checkin).days
+        makkah_nights = max(1, (makkah_checkout - makkah_checkin).days)
     else:
         makkah_checkin, makkah_checkout = today, today + timedelta(days=4)
         makkah_nights = 4
-    
-    makkah_nights = max(1, makkah_nights)
-    st.sidebar.caption(f"Calculated Stay: **{makkah_nights} Night(s)** ({makkah_checkin.strftime('%d %b')} - {makkah_checkout.strftime('%d %b %Y')})")
 
     add_makkah_ex = st.sidebar.checkbox("Add Makkah Extra Bed (EX)?", value=True)
-    makkah_ex_rate = 0.0
-    if add_makkah_ex:
-        makkah_ex_rate = st.sidebar.number_input("Makkah EX Rate / Night (SAR)", min_value=0.0, value=90.0, step=10.0)
+    makkah_ex_rate = st.sidebar.number_input("Makkah EX Rate / Night (SAR)", min_value=0.0, value=90.0, step=10.0) if add_makkah_ex else 0.0
 
-    # --- MADINAH HOTEL SECTION ---
-    st.sidebar.markdown("## 3. Madinah Hotel (Vendor Quote)")
+    st.sidebar.markdown("### 3. Madinah Hotel (Vendor Quote)")
     madinah_name = st.sidebar.text_input("Madinah Hotel Name", value="")
     madinah_rate = st.sidebar.number_input("Madinah DBL Rate / Night (SAR)", min_value=0.0, value=500.0, step=10.0)
     
-    madinah_dates = st.sidebar.date_input(
-        "Madinah Stay Dates (Check-in to Check-out)",
-        value=(makkah_checkout, makkah_checkout + timedelta(days=3))
-    )
-    
+    madinah_dates = st.sidebar.date_input("Madinah Stay Dates", value=(makkah_checkout, makkah_checkout + timedelta(days=3)))
     if isinstance(madinah_dates, (tuple, list)) and len(madinah_dates) == 2:
         madinah_checkin, madinah_checkout = madinah_dates
-        madinah_nights = (madinah_checkout - madinah_checkin).days
+        madinah_nights = max(1, (madinah_checkout - madinah_checkin).days)
     else:
         madinah_checkin, madinah_checkout = makkah_checkout, makkah_checkout + timedelta(days=3)
         madinah_nights = 3
-        
-    madinah_nights = max(1, madinah_nights)
-    st.sidebar.caption(f"Calculated Stay: **{madinah_nights} Night(s)** ({madinah_checkin.strftime('%d %b')} - {madinah_checkout.strftime('%d %b %Y')})")
 
     add_madinah_ex = st.sidebar.checkbox("Add Madinah Extra Bed (EX)?", value=False)
-    madinah_ex_rate = 0.0
-    if add_madinah_ex:
-        madinah_ex_rate = st.sidebar.number_input("Madinah EX Rate / Night (SAR)", min_value=0.0, value=90.0, step=10.0)
+    madinah_ex_rate = st.sidebar.number_input("Madinah EX Rate / Night (SAR)", min_value=0.0, value=90.0, step=10.0) if add_madinah_ex else 0.0
 
-    # --- SIGHTSEEING SECTION ---
-    st.sidebar.markdown("## 4. Sightseeing & Tours Inclusion")
+    st.sidebar.markdown("### 4. Sightseeing & Tours")
     include_makkah_mazarat = st.sidebar.checkbox("Include Makkah Mazarat", value=True)
     include_madinah_mazarat = st.sidebar.checkbox("Include Madinah Mazarat", value=True)
     include_jeddah_tour = st.sidebar.selectbox("Jeddah Tour", ["No", "Yes"], index=0)
     include_taif_tour = st.sidebar.selectbox("Taif Tour", ["No", "Yes"], index=0)
 
-    # --- JEDDAH HOTEL OPTIONAL SECTION ---
     include_jeddah_hotel = False
     jeddah_name = ""
     jeddah_rate = 0.0
@@ -202,47 +116,31 @@ if check_password():
     jeddah_checkin, jeddah_checkout = madinah_checkout, madinah_checkout + timedelta(days=1)
 
     if include_jeddah_tour == "Yes":
-        st.sidebar.markdown("## 5. Jeddah Hotel (Optional Stay)")
+        st.sidebar.markdown("### 5. Jeddah Hotel (Optional Stay)")
         include_jeddah_hotel = st.sidebar.checkbox("Add Jeddah Hotel Stay?", value=False)
         if include_jeddah_hotel:
             jeddah_name = st.sidebar.text_input("Jeddah Hotel Name", value="")
             jeddah_rate = st.sidebar.number_input("Jeddah DBL Rate / Night (SAR)", min_value=0.0, value=450.0, step=10.0)
-            
-            jeddah_dates = st.sidebar.date_input(
-                "Jeddah Stay Dates (Check-in to Check-out)",
-                value=(madinah_checkout, madinah_checkout + timedelta(days=1))
-            )
-            
+            jeddah_dates = st.sidebar.date_input("Jeddah Stay Dates", value=(madinah_checkout, madinah_checkout + timedelta(days=1)))
             if isinstance(jeddah_dates, (tuple, list)) and len(jeddah_dates) == 2:
                 jeddah_checkin, jeddah_checkout = jeddah_dates
-                jeddah_nights = (jeddah_checkout - jeddah_checkin).days
+                jeddah_nights = max(1, (jeddah_checkout - jeddah_checkin).days)
             else:
-                jeddah_checkin, jeddah_checkout = madinah_checkout, madinah_checkout + timedelta(days=1)
                 jeddah_nights = 1
-                
-            jeddah_nights = max(1, jeddah_nights)
-            st.sidebar.caption(f"Calculated Stay: **{jeddah_nights} Night(s)** ({jeddah_checkin.strftime('%d %b')} - {jeddah_checkout.strftime('%d %b %Y')})")
-
             add_jeddah_ex = st.sidebar.checkbox("Add Jeddah Extra Bed (EX)?", value=False)
             if add_jeddah_ex:
                 jeddah_ex_rate = st.sidebar.number_input("Jeddah EX Rate / Night (SAR)", min_value=0.0, value=90.0, step=10.0)
 
-    # --- MANDATORY SERVICES ---
-    st.sidebar.markdown("## 6. Mandatory Services & Inclusions")
+    st.sidebar.markdown("### 6. Mandatory Services")
     include_visa = st.sidebar.checkbox("Include Visa Processing Fee?", value=True)
-    visa_fee_per_pax = 0.0
-    if include_visa:
-        visa_fee_per_pax = st.sidebar.number_input("Visa Fee Per Person (BDT)", min_value=0.0, value=22000.0, step=500.0)
+    visa_fee_per_pax = st.sidebar.number_input("Visa Fee Per Person (BDT)", min_value=0.0, value=22000.0, step=500.0) if include_visa else 0.0
 
     include_muallem = st.sidebar.checkbox("Include Muallem Fee?", value=True)
-    muallem_fee_group = 0.0
-    if include_muallem:
-        muallem_fee_group = st.sidebar.number_input("Muallem Fee Per Group (SAR)", min_value=0.0, value=150.0, step=10.0)
+    muallem_fee_group = st.sidebar.number_input("Muallem Fee Per Group (SAR)", min_value=0.0, value=150.0, step=10.0) if include_muallem else 0.0
 
-    st.sidebar.markdown("## 7. Transport & Luggage Override")
-    force_larger_vehicle = st.sidebar.checkbox("Force Larger Vehicle (Extra Luggage / Bags)?", value=False)
+    st.sidebar.markdown("### 7. Transport Override")
+    force_larger_vehicle = st.sidebar.checkbox("Force Larger Vehicle (Extra Luggage)?", value=False)
 
-    # --- TRANSPORT DATA ---
     transport_data = {
         "Route": [
             "Jeddah Airport to Makkah", "Makkah to Jeddah Airport", 
@@ -259,40 +157,26 @@ if check_password():
     }
     df_transport = pd.DataFrame(transport_data)
 
-    # Vehicle Logic
     if pax <= 4:
-        if force_larger_vehicle:
-            vehicle_name = "Starex / Staria (7 Pax) [Luggage Upgraded]"
-            col_idx = "Starex (7 Pax)"
-        else:
-            vehicle_name = "Car (4 Pax)"
-            col_idx = "Car (4 Pax)"
+        vehicle_name = "Starex / Staria (7 Pax) [Luggage Upgraded]" if force_larger_vehicle else "Car (4 Pax)"
+        col_idx = "Starex (7 Pax)" if force_larger_vehicle else "Car (4 Pax)"
     elif pax <= 7:
-        if force_larger_vehicle:
-            vehicle_name = "Hiace (10 Pax) [Luggage Upgraded]"
-            col_idx = "Hiace (10 Pax)"
-        else:
-            vehicle_name = "Starex / Staria (7 Pax)"
-            col_idx = "Starex (7 Pax)"
+        vehicle_name = "Hiace (10 Pax) [Luggage Upgraded]" if force_larger_vehicle else "Starex / Staria (7 Pax)"
+        col_idx = "Hiace (10 Pax)" if force_larger_vehicle else "Starex (7 Pax)"
     elif pax <= 10:
-        if force_larger_vehicle:
-            vehicle_name = "Bus (47 Pax) [Luggage Upgraded]"
-            col_idx = "Bus (47 Pax)"
-        else:
-            vehicle_name = "Hiace (10 Pax)"
-            col_idx = "Hiace (10 Pax)"
+        vehicle_name = "Bus (47 Pax) [Luggage Upgraded]" if force_larger_vehicle else "Hiace (10 Pax)"
+        col_idx = "Bus (47 Pax)" if force_larger_vehicle else "Hiace (10 Pax)"
     else:
         vehicle_name = "Bus (47 Pax)"
         col_idx = "Bus (47 Pax)"
 
-    # --- CALCULATIONS ---
-    eff_makkah_rate = makkah_rate + (makkah_ex_rate if add_makkah_ex else 0.0)
+    eff_makkah_rate = makkah_rate + makkah_ex_rate
     makkah_total_sar = eff_makkah_rate * makkah_nights
 
-    eff_madinah_rate = madinah_rate + (madinah_ex_rate if add_madinah_ex else 0.0)
+    eff_madinah_rate = madinah_rate + madinah_ex_rate
     madinah_total_sar = eff_madinah_rate * madinah_nights
 
-    eff_jeddah_rate = jeddah_rate + (jeddah_ex_rate if add_jeddah_ex else 0.0)
+    eff_jeddah_rate = jeddah_rate + jeddah_ex_rate
     jeddah_total_sar = (eff_jeddah_rate * jeddah_nights) if include_jeddah_hotel else 0.0
 
     hotel_total_sar = makkah_total_sar + madinah_total_sar + jeddah_total_sar
@@ -307,12 +191,7 @@ if check_password():
             return float(row[col_idx].values[0])
         return 0.0
 
-    routes_needed = [
-        "Jeddah Airport to Makkah", 
-        "Makkah to Madinah (Vice Versa)", 
-        "Madinah to Jeddah Airport"
-    ]
-
+    routes_needed = ["Jeddah Airport to Makkah", "Makkah to Madinah (Vice Versa)", "Madinah to Jeddah Airport"]
     if include_makkah_mazarat:
         routes_needed.append("Makkah Mazarat")
     if include_madinah_mazarat:
@@ -320,7 +199,6 @@ if check_password():
 
     service_rows = []
     transport_sar = 0.0
-
     for r in routes_needed:
         cost = get_route_cost(r)
         transport_sar += cost
@@ -344,109 +222,66 @@ if check_password():
     client_total_bdt = net_cost_bdt + profit_amount_bdt
     per_person_bdt = client_total_bdt / pax
 
-    # --- MAIN DISPLAY AREA ---
     col1, col2 = st.columns(2)
-
     with col1:
-        st.markdown("<h3 style='color: #38BDF8;'>Hotel Accommodation</h3>", unsafe_allow_html=True)
+        st.subheader("Hotel Accommodation")
+        makkah_h_disp = makkah_name if makkah_name.strip() else "To be specified"
+        madinah_h_disp = madinah_name if madinah_name.strip() else "To be specified"
+        jeddah_h_disp = (jeddah_name if jeddah_name.strip() else "To be specified") if include_jeddah_hotel else "N/A"
         
-        makkah_hotel_display = makkah_name if makkah_name.strip() else "To be specified"
-        madinah_hotel_display = madinah_name if madinah_name.strip() else "To be specified"
-        jeddah_hotel_display = (jeddah_name if jeddah_name.strip() else "To be specified") if include_jeddah_hotel else "N/A"
+        m_label = f"{makkah_h_disp} (DBL + EX)" if add_makkah_ex else f"{makkah_h_disp} (DBL)"
+        md_label = f"{madinah_h_disp} (DBL + EX)" if add_madinah_ex else f"{madinah_h_disp} (DBL)"
         
-        makkah_label = f"{makkah_hotel_display} (DBL + EX)" if add_makkah_ex else f"{makkah_hotel_display} (DBL)"
-        madinah_label = f"{madinah_hotel_display} (DBL + EX)" if add_madinah_ex else f"{madinah_hotel_display} (DBL)"
-        
-        hotel_list = [
-            {"City": "Makkah", "Hotel": makkah_label, "Rate/Night (SAR)": eff_makkah_rate, "Nights": makkah_nights, "Total (SAR)": makkah_total_sar, "Total (BDT)": makkah_total_sar * exchange_rate},
-            {"City": "Madinah", "Hotel": madinah_label, "Rate/Night (SAR)": eff_madinah_rate, "Nights": madinah_nights, "Total (SAR)": madinah_total_sar, "Total (BDT)": madinah_total_sar * exchange_rate}
+        h_list = [
+            {"City": "Makkah", "Hotel": m_label, "Rate/Night (SAR)": eff_makkah_rate, "Nights": makkah_nights, "Total (SAR)": makkah_total_sar, "Total (BDT)": makkah_total_sar * exchange_rate},
+            {"City": "Madinah", "Hotel": md_label, "Rate/Night (SAR)": eff_madinah_rate, "Nights": madinah_nights, "Total (SAR)": madinah_total_sar, "Total (BDT)": madinah_total_sar * exchange_rate}
         ]
-
         if include_jeddah_hotel:
-            jeddah_label = f"{jeddah_hotel_display} (DBL + EX)" if add_jeddah_ex else f"{jeddah_hotel_display} (DBL)"
-            hotel_list.append({"City": "Jeddah", "Hotel": jeddah_label, "Rate/Night (SAR)": eff_jeddah_rate, "Nights": jeddah_nights, "Total (SAR)": jeddah_total_sar, "Total (BDT)": jeddah_total_sar * exchange_rate})
+            j_label = f"{jeddah_h_disp} (DBL + EX)" if add_jeddah_ex else f"{jeddah_h_disp} (DBL)"
+            h_list.append({"City": "Jeddah", "Hotel": j_label, "Rate/Night (SAR)": eff_jeddah_rate, "Nights": jeddah_nights, "Total (SAR)": jeddah_total_sar, "Total (BDT)": jeddah_total_sar * exchange_rate})
 
-        hotel_df = pd.DataFrame(hotel_list)
-        st.dataframe(hotel_df, use_container_width=True)
-        st.info(f"**Total Hotel Expense:** ৳ {hotel_total_bdt:,.2f} ({hotel_total_sar:,.2f} SAR)")
+        st.dataframe(pd.DataFrame(h_list), use_container_width=True)
+        st.info(f"Total Hotel Expense: BDT {hotel_total_bdt:,.2f}")
 
     with col2:
-        st.markdown(f"<h3 style='color: #38BDF8;'>Transport & Services (<span style='color: #60A5FA;'>{vehicle_name}</span>)</h3>", unsafe_allow_html=True)
-        
-        service_summary_list = []
+        st.subheader(f"Transport & Services ({vehicle_name})")
+        serv_summary = []
         if include_visa:
-            service_summary_list.append({"Service": "Visa Fee", "Details": f"{pax} Pax × ৳{visa_fee_per_pax:,.0f}", "Cost (SAR)": 0, "Cost (BDT)": visa_total_bdt})
-        else:
-            service_summary_list.append({"Service": "Visa Fee", "Details": "Excluded by Client", "Cost (SAR)": 0, "Cost (BDT)": 0})
-            
+            serv_summary.append({"Service": "Visa Fee", "Details": f"{pax} Pax", "Cost (SAR)": 0, "Cost (BDT)": visa_total_bdt})
         if include_muallem:
-            service_summary_list.append({"Service": "Muallem Fee", "Details": "Fixed Group Fee", "Cost (SAR)": muallem_fee_group, "Cost (BDT)": muallem_total_bdt})
-        else:
-            service_summary_list.append({"Service": "Muallem Fee", "Details": "Excluded by Client", "Cost (SAR)": 0, "Cost (BDT)": 0})
-            
-        serv_df = pd.DataFrame(service_summary_list + service_rows)
-        st.dataframe(serv_df, use_container_width=True)
-        st.info(f"**Total Services Expense:** ৳ {total_services_bdt:,.2f} ({transport_sar + muallem_fee_group:,.2f} SAR)")
+            serv_summary.append({"Service": "Muallem Fee", "Details": "Fixed Group", "Cost (SAR)": muallem_fee_group, "Cost (BDT)": muallem_total_bdt})
+        st.dataframe(pd.DataFrame(serv_summary + service_rows), use_container_width=True)
+        st.info(f"Total Services Expense: BDT {total_services_bdt:,.2f}")
 
     st.divider()
-
-    # --- FINAL SUMMARY SECTION WITH BRANDED CARDS ---
-    st.markdown("<h3 style='color: #38BDF8; text-align: center;'>Final Quotation Summary</h3>", unsafe_allow_html=True)
-    st.write("")
-
-    sum_col1, sum_col2, sum_col3 = st.columns(3)
-
-    with sum_col1:
-        st.markdown(f"""
-            <div class="summary-card-secondary">
-                <div class="card-label-blue">Total Net Cost (Agency)</div>
-                <div class="card-value-white">৳ {net_cost_bdt:,.2f}</div>
-            </div>
-        """, unsafe_allow_html=True)
-
-    with sum_col2:
-        st.markdown(f"""
-            <div class="summary-card-primary">
-                <div class="card-label-light">Client Package Price ({int(profit_margin*100)}% Margin)</div>
-                <div class="card-value-white">৳ {client_total_bdt:,.2f}</div>
-            </div>
-        """, unsafe_allow_html=True)
-
-    with sum_col3:
-        st.markdown(f"""
-            <div class="summary-card-secondary">
-                <div class="card-label-blue">Per Person Package Price</div>
-                <div class="card-value-white">৳ {per_person_bdt:,.2f}</div>
-            </div>
-        """, unsafe_allow_html=True)
+    st.subheader("Final Quotation Summary")
+    sc1, sc2, sc3 = st.columns(3)
+    with sc1:
+        st.metric("Total Net Cost (Agency)", f"BDT {net_cost_bdt:,.2f}")
+    with sc2:
+        st.metric(f"Client Package Price ({int(profit_margin*100)}%)", f"BDT {client_total_bdt:,.2f}")
+    with sc3:
+        st.metric("Per Person Price", f"BDT {per_person_bdt:,.2f}")
 
     st.divider()
+    st.subheader("Client-Ready Quotation Text")
+    client_display = client_name.strip() if client_name.strip() else "Valued Client"
+    
+    makkah_dt_str = f"{makkah_checkin.strftime('%d %b %Y')} to {makkah_checkout.strftime('%d %b %Y')}"
+    madinah_dt_str = f"{madinah_checkin.strftime('%d %b %Y')} to {madinah_checkout.strftime('%d %b %Y')}"
+    jeddah_dt_str = f"{jeddah_checkin.strftime('%d %b %Y')} to {jeddah_checkout.strftime('%d %b %Y')}"
 
-    # --- CLIENT READY TEXT GENERATOR SECTION ---
-    st.markdown("<h3 style='color: #38BDF8;'>Client-Ready Quotation Text (Copy & Paste)</h3>", unsafe_allow_html=True)
-    st.write("You can directly copy the text below and send it to your client via WhatsApp or Email:")
-
-    client_display_name = client_name.strip() if client_name.strip() else "Valued Client"
-
-    makkah_room_type = "Double Room Sharing with Extra Bed" if add_makkah_ex else "Double Room Sharing"
-    madinah_room_type = "Double Room Sharing with Extra Bed" if add_madinah_ex else "Double Room Sharing"
-    jeddah_room_type = "Double Room Sharing with Extra Bed" if add_jeddah_ex else "Double Room Sharing"
-
-    makkah_dates_str = f"{makkah_checkin.strftime('%d %b %Y')} to {makkah_checkout.strftime('%d %b %Y')}"
-    madinah_dates_str = f"{madinah_checkin.strftime('%d %b %Y')} to {madinah_checkout.strftime('%d %b %Y')}"
-    jeddah_dates_str = f"{jeddah_checkin.strftime('%d %b %Y')} to {jeddah_checkout.strftime('%d %b %Y')}"
-
-    hotel_text_lines = f"• Makkah ({makkah_nights} Nights | {makkah_dates_str}): {makkah_hotel_display} ({makkah_room_type})\n• Madinah ({madinah_nights} Nights | {madinah_dates_str}): {madinah_hotel_display} ({madinah_room_type})"
+    hotel_lines = f"• Makkah ({makkah_nights} Nights | {makkah_dt_str}): {makkah_h_disp}\n• Madinah ({madinah_nights} Nights | {madinah_dt_str}): {madinah_h_disp}"
     if include_jeddah_hotel:
-        hotel_text_lines += f"\n• Jeddah ({jeddah_nights} Nights | {jeddah_dates_str}): {jeddah_hotel_display} ({jeddah_room_type})"
+        hotel_lines += f"\n• Jeddah ({jeddah_nights} Nights | {jeddah_dt_str}): {jeddah_h_disp}"
 
-    quotation_text = f"""UMRAH LAND PACKAGE QUOTATION
+    q_text = f"""UMRAH LAND PACKAGE QUOTATION
 -----------------------------------------
-Client Name: {client_display_name}
+Client Name: {client_display}
 Total Pilgrims (Pax): {pax} Persons
 
 Hotel Accommodation:
-{hotel_text_lines}
+{hotel_lines}
 
 Transport & Services Included:
 • Private Assigned Vehicle ({vehicle_name})
@@ -462,40 +297,23 @@ Package Investment:
 • Total Package Price: BDT {client_total_bdt:,.2f}
 • Per Person Price: BDT {per_person_bdt:,.2f}
 
-(Note: Air ticket is excluded. Rates are subject to availability upon confirmation.)
-"""
+(Note: Air ticket is excluded. Rates are subject to availability.)"""
 
-    st.text_area("Copy Quotation Text Below:", value=quotation_text, height=310)
+    st.text_area("Copy Text:", value=q_text, height=280)
 
     st.divider()
-
-    # --- SAVE TO DATABASE & HISTORY SECTION ---
-    st.markdown("<h3 style='color: #38BDF8;'>Save & View Saved Quotations History</h3>", unsafe_allow_html=True)
-
-    col_save, col_dl = st.columns([1, 1])
-
-    with col_save:
-        if st.button("Save Current Quotation to History", use_container_width=True):
+    st.subheader("Save & History")
+    col_s, col_d = st.columns(2)
+    with col_s:
+        if st.button("Save Quotation", use_container_width=True):
             today_str = datetime.now().strftime("%Y-%m-%d %H:%M")
-            c.execute('''
-                INSERT INTO quotations (date, client_name, pax, makkah_hotel, madinah_hotel, jeddah_hotel, total_price_bdt, per_person_bdt)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-            ''', (today_str, client_display_name, pax, makkah_hotel_display, madinah_hotel_display, jeddah_hotel_display, client_total_bdt, per_person_bdt))
+            c.execute('INSERT INTO quotations (date, client_name, pax, makkah_hotel, madinah_hotel, jeddah_hotel, total_price_bdt, per_person_bdt) VALUES (?, ?, ?, ?, ?, ?, ?, ?)', 
+                      (today_str, client_display, pax, makkah_h_disp, madinah_h_disp, jeddah_h_disp, client_total_bdt, per_person_bdt))
             conn.commit()
-            st.success(f"Quotation for '{client_display_name}' saved successfully!")
+            st.success("Saved successfully!")
 
-    history_df = pd.read_sql_query("SELECT id AS 'ID', date AS 'Date', client_name AS 'Client Name', pax AS 'Pax', makkah_hotel AS 'Makkah Hotel', madinah_hotel AS 'Madinah Hotel', jeddah_hotel AS 'Jeddah Hotel', total_price_bdt AS 'Total (BDT)', per_person_bdt AS 'Per Person (BDT)' FROM quotations ORDER BY id DESC", conn)
-
+    history_df = pd.read_sql_query("SELECT id AS 'ID', date AS 'Date', client_name AS 'Client Name', pax AS 'Pax', makkah_hotel AS 'Makkah', madinah_hotel AS 'Madinah', jeddah_hotel AS 'Jeddah', total_price_bdt AS 'Total (BDT)', per_person_bdt AS 'Per Person' FROM quotations ORDER BY id DESC", conn)
     if not history_df.empty:
-        with col_dl:
-            csv_data = history_df.to_csv(index=False).encode('utf-8')
-            st.download_button(
-                label="Download History as Excel (CSV)",
-                data=csv_data,
-                file_name=f"umrah_quotations_history_{datetime.now().strftime('%Y%m%d')}.csv",
-                mime="text/csv",
-                use_container_width=True
-            )
-
-        st.write("#### Previously Saved Quotations History:")
+        with col_d:
+            st.download_button("Download History as CSV", data=history_df.to_csv(index=False).encode('utf-8'), file_name="history.csv", mime="text/csv", use_container_width=True)
         st.dataframe(history_df, use_container_width=True)
